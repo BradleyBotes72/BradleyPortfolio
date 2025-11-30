@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { FaLinkedin, FaGithub, FaEnvelope, FaMapMarkerAlt, FaPaperPlane } from 'react-icons/fa';
+import { FaLinkedin, FaGithub, FaEnvelope, FaMapMarkerAlt, FaPaperPlane, FaFilePdf } from 'react-icons/fa';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -11,6 +13,8 @@ const Contact = () => {
   });
 
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const contentRef = useRef(null);
 
   const handleChange = (e) => {
     setFormData({
@@ -37,6 +41,114 @@ const Contact = () => {
       setFormData({ name: '', email: '', subject: '', message: '' });
       setIsSubmitted(false);
     }, 3000);
+  };
+
+  const downloadPDF = async () => {
+    if (!contentRef.current) return;
+    
+    setIsGeneratingPDF(true);
+    try {
+      // Scroll to top first
+      window.scrollTo(0, 0);
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Capture the ENTIRE page - let html2canvas auto-detect full height
+      const canvas = await html2canvas(contentRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        allowTaint: false,
+        removeContainer: false,
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = 210;
+      const pdfHeight = 297;
+      
+      // Scale image to fit page width
+      const ratio = pdfWidth / imgWidth;
+      const scaledHeight = imgHeight * ratio;
+      
+      let yPosition = 0;
+      let heightLeft = scaledHeight;
+      
+      // Helper function to add contact footer
+      const addContactFooter = (pdfPage) => {
+        const footerY = pdfHeight - 8;
+        pdfPage.setFontSize(8);
+        pdfPage.setFont('helvetica', 'normal');
+        
+        // Email
+        pdfPage.setTextColor(107, 107, 107); // #6B6B6B grey
+        pdfPage.text('Email:', 10, footerY);
+        pdfPage.setTextColor(255, 107, 53); // #FF6B35 orange
+        pdfPage.textWithLink('bradleybotes72@gmail.com', 30, footerY, { url: 'mailto:bradleybotes72@gmail.com' });
+        
+        // Phone
+        pdfPage.setTextColor(107, 107, 107);
+        pdfPage.text('Phone:', 100, footerY);
+        pdfPage.setTextColor(255, 107, 53);
+        pdfPage.textWithLink('+27 76 071 7709', 120, footerY, { url: 'tel:+27760717709' });
+        
+        // LinkedIn
+        pdfPage.setTextColor(107, 107, 107);
+        pdfPage.text('LinkedIn:', 10, footerY + 4);
+        pdfPage.setTextColor(255, 107, 53);
+        pdfPage.textWithLink('linkedin.com/in/bradley-clint-botes', 30, footerY + 4, { url: 'https://www.linkedin.com/in/bradley-clint-botes-b80a15200/' });
+        
+        // GitHub
+        pdfPage.setTextColor(107, 107, 107);
+        pdfPage.text('GitHub:', 100, footerY + 4);
+        pdfPage.setTextColor(255, 107, 53);
+        pdfPage.textWithLink('github.com/bradleybotes', 120, footerY + 4, { url: 'https://github.com/bradleybotes' });
+      };
+      
+      // Add first page with clickable header - matching site style
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      
+      // "Visit:" label in grey
+      pdf.setTextColor(107, 107, 107); // #6B6B6B grey
+      pdf.text('Visit:', 10, 8);
+      
+      // Website link in orange
+      pdf.setTextColor(255, 107, 53); // #FF6B35 orange
+      pdf.textWithLink('www.bradleybotes.co.za', 25, 8, { url: 'https://www.bradleybotes.co.za' });
+      
+      // "Download CV" button in orange
+      pdf.setTextColor(255, 107, 53); // #FF6B35 orange
+      pdf.textWithLink('Download CV', pdfWidth - 40, 8, { url: 'https://www.bradleybotes.co.za/cv/cv_download.pdf' });
+      
+      // Calculate available height
+      const headerHeight = 12;
+      const availableHeight = pdfHeight - headerHeight;
+      
+      pdf.addImage(imgData, 'PNG', 0, headerHeight, pdfWidth, scaledHeight);
+      heightLeft -= availableHeight;
+      
+      // Add remaining pages
+      while (heightLeft > 0) {
+        pdf.addPage();
+        yPosition = -(scaledHeight - heightLeft);
+        pdf.addImage(imgData, 'PNG', 0, yPosition, pdfWidth, scaledHeight);
+        heightLeft -= availableHeight;
+      }
+      
+      // Add contact footer only on the last page
+      addContactFooter(pdf);
+      
+      pdf.save('Bradley_Botes_Contact.pdf');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
   };
 
   const contactInfo = [
@@ -67,7 +179,7 @@ const Contact = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white" ref={contentRef}>
       {/* Hero Section */}
       <section className="relative py-20 overflow-hidden">
         <div className="absolute inset-0 data-grid-bg opacity-30"></div>
@@ -83,10 +195,34 @@ const Contact = () => {
               Let's Build Something
               <span className="block text-grey-medium mt-2">Insightful Together</span>
             </h1>
-            <p className="text-xl text-grey max-w-3xl mx-auto">
+            <p className="text-xl text-grey max-w-3xl mx-auto mb-8">
               Have a project in mind or want to discuss how Power BI can transform your business? 
               I'd love to hear from you.
             </p>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="flex justify-center"
+            >
+              <button
+                onClick={downloadPDF}
+                disabled={isGeneratingPDF}
+                className="inline-flex items-center px-6 py-3 border-2 border-accent text-accent rounded-lg font-semibold hover:bg-accent hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isGeneratingPDF ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-accent mr-2"></div>
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <FaFilePdf className="mr-2" />
+                    Download as PDF
+                  </>
+                )}
+              </button>
+            </motion.div>
           </motion.div>
         </div>
       </section>

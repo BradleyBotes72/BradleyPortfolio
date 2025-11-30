@@ -1,11 +1,15 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import { FaChartBar, FaCloud, FaDatabase, FaBrain, FaDownload, FaLinkedin, FaGithub, FaEnvelope, FaInstagram, FaArrowRight } from 'react-icons/fa';
+import { useState, useEffect, useRef } from 'react';
+import { FaChartBar, FaCloud, FaDatabase, FaBrain, FaDownload, FaLinkedin, FaGithub, FaEnvelope, FaInstagram, FaArrowRight, FaFilePdf } from 'react-icons/fa';
 import { projects } from '../data/projects';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const Home = () => {
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const contentRef = useRef(null);
 
   const quotes = [
     "The future belongs to those who understand data.",
@@ -26,6 +30,114 @@ const Home = () => {
 
     return () => clearInterval(interval);
   }, [quotes.length]);
+
+  const downloadPDF = async () => {
+    if (!contentRef.current) return;
+    
+    setIsGeneratingPDF(true);
+    try {
+      // Scroll to top first
+      window.scrollTo(0, 0);
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Capture the ENTIRE page - let html2canvas auto-detect full height
+      const canvas = await html2canvas(contentRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        allowTaint: false,
+        removeContainer: false,
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = 210;
+      const pdfHeight = 297;
+      
+      // Scale image to fit page width
+      const ratio = pdfWidth / imgWidth;
+      const scaledHeight = imgHeight * ratio;
+      
+      let yPosition = 0;
+      let heightLeft = scaledHeight;
+      
+      // Helper function to add contact footer
+      const addContactFooter = (pdfPage) => {
+        const footerY = pdfHeight - 8;
+        pdfPage.setFontSize(8);
+        pdfPage.setFont('helvetica', 'normal');
+        
+        // Email
+        pdfPage.setTextColor(107, 107, 107); // #6B6B6B grey
+        pdfPage.text('Email:', 10, footerY);
+        pdfPage.setTextColor(255, 107, 53); // #FF6B35 orange
+        pdfPage.textWithLink('bradleybotes72@gmail.com', 30, footerY, { url: 'mailto:bradleybotes72@gmail.com' });
+        
+        // Phone
+        pdfPage.setTextColor(107, 107, 107);
+        pdfPage.text('Phone:', 100, footerY);
+        pdfPage.setTextColor(255, 107, 53);
+        pdfPage.textWithLink('+27 76 071 7709', 120, footerY, { url: 'tel:+27760717709' });
+        
+        // LinkedIn
+        pdfPage.setTextColor(107, 107, 107);
+        pdfPage.text('LinkedIn:', 10, footerY + 4);
+        pdfPage.setTextColor(255, 107, 53);
+        pdfPage.textWithLink('linkedin.com/in/bradley-clint-botes', 30, footerY + 4, { url: 'https://www.linkedin.com/in/bradley-clint-botes-b80a15200/' });
+        
+        // GitHub
+        pdfPage.setTextColor(107, 107, 107);
+        pdfPage.text('GitHub:', 100, footerY + 4);
+        pdfPage.setTextColor(255, 107, 53);
+        pdfPage.textWithLink('github.com/bradleybotes', 120, footerY + 4, { url: 'https://github.com/bradleybotes' });
+      };
+      
+      // Add first page with clickable header - matching site style
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      
+      // "Visit:" label in grey
+      pdf.setTextColor(107, 107, 107); // #6B6B6B grey
+      pdf.text('Visit:', 10, 8);
+      
+      // Website link in orange
+      pdf.setTextColor(255, 107, 53); // #FF6B35 orange
+      pdf.textWithLink('www.bradleybotes.co.za', 25, 8, { url: 'https://www.bradleybotes.co.za' });
+      
+      // "Download CV" button in orange
+      pdf.setTextColor(255, 107, 53); // #FF6B35 orange
+      pdf.textWithLink('Download CV', pdfWidth - 40, 8, { url: 'https://www.bradleybotes.co.za/cv/cv_download.pdf' });
+      
+      // Calculate available height
+      const headerHeight = 12;
+      const availableHeight = pdfHeight - headerHeight;
+      
+      pdf.addImage(imgData, 'PNG', 0, headerHeight, pdfWidth, scaledHeight);
+      heightLeft -= availableHeight;
+      
+      // Add remaining pages
+      while (heightLeft > 0) {
+        pdf.addPage();
+        yPosition = -(scaledHeight - heightLeft);
+        pdf.addImage(imgData, 'PNG', 0, yPosition, pdfWidth, scaledHeight);
+        heightLeft -= availableHeight;
+      }
+      
+      // Add contact footer only on the last page
+      addContactFooter(pdf);
+      
+      pdf.save('Bradley_Botes_Portfolio.pdf');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
 
   const services = [
     {
@@ -60,7 +172,7 @@ const Home = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white" ref={contentRef}>
       {/* Hero Section - Split Screen */}
       <section className="relative min-h-screen flex items-center overflow-hidden">
         {/* Background Image with Frosted Glass Effect */}
@@ -178,8 +290,27 @@ const Home = () => {
                   download
                   className="inline-flex items-center px-8 py-4 border-2 border-orange text-orange rounded font-semibold hover:bg-orange hover:text-white transition-all"
                 >
+                  <FaDownload className="mr-2" />
                   Download CV
                 </a>
+                
+                <button
+                  onClick={downloadPDF}
+                  disabled={isGeneratingPDF}
+                  className="inline-flex items-center px-8 py-4 border-2 border-accent text-accent rounded font-semibold hover:bg-accent hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isGeneratingPDF ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-accent mr-2"></div>
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <FaFilePdf className="mr-2" />
+                      Download as PDF
+                    </>
+                  )}
+                </button>
               </motion.div>
 
               {/* Social Links */}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { getProjectById } from '../data/projects';
@@ -12,8 +12,11 @@ import {
   FaTools,
   FaCheckCircle,
   FaChevronLeft,
-  FaChevronRight
+  FaChevronRight,
+  FaFilePdf
 } from 'react-icons/fa';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const ProjectDetail = () => {
   const { id } = useParams();
@@ -21,6 +24,8 @@ const ProjectDetail = () => {
   const project = getProjectById(id);
   const [expandedDax, setExpandedDax] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const contentRef = useRef(null);
 
   if (!project) {
     return (
@@ -57,6 +62,126 @@ const ProjectDetail = () => {
     setCurrentImageIndex(index);
   };
 
+  const downloadPDF = async () => {
+    if (!contentRef.current) return;
+    
+    setIsGeneratingPDF(true);
+    try {
+      // Hide embed section
+      const embedSection = document.querySelector('[data-embed-section]');
+      const originalDisplay = embedSection?.style.display;
+      if (embedSection) {
+        embedSection.style.display = 'none';
+      }
+
+      // Scroll to top first
+      window.scrollTo(0, 0);
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Capture the ENTIRE page - let html2canvas auto-detect full height
+      const canvas = await html2canvas(contentRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        allowTaint: false,
+        removeContainer: false,
+      });
+      
+      // Restore embed section
+      if (embedSection) {
+        embedSection.style.display = originalDisplay;
+      }
+      
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = 210;
+      const pdfHeight = 297;
+      
+      // Scale image to fit page width
+      const ratio = pdfWidth / imgWidth;
+      const scaledHeight = imgHeight * ratio;
+      
+      let yPosition = 0;
+      let heightLeft = scaledHeight;
+      
+      // Helper function to add contact footer
+      const addContactFooter = (pdfPage) => {
+        const footerY = pdfHeight - 8;
+        pdfPage.setFontSize(8);
+        pdfPage.setFont('helvetica', 'normal');
+        
+        // Email
+        pdfPage.setTextColor(107, 107, 107); // #6B6B6B grey
+        pdfPage.text('Email:', 10, footerY);
+        pdfPage.setTextColor(255, 107, 53); // #FF6B35 orange
+        pdfPage.textWithLink('bradleybotes72@gmail.com', 30, footerY, { url: 'mailto:bradleybotes72@gmail.com' });
+        
+        // Phone
+        pdfPage.setTextColor(107, 107, 107);
+        pdfPage.text('Phone:', 100, footerY);
+        pdfPage.setTextColor(255, 107, 53);
+        pdfPage.textWithLink('+27 76 071 7709', 120, footerY, { url: 'tel:+27760717709' });
+        
+        // LinkedIn
+        pdfPage.setTextColor(107, 107, 107);
+        pdfPage.text('LinkedIn:', 10, footerY + 4);
+        pdfPage.setTextColor(255, 107, 53);
+        pdfPage.textWithLink('linkedin.com/in/bradley-clint-botes', 30, footerY + 4, { url: 'https://www.linkedin.com/in/bradley-clint-botes-b80a15200/' });
+        
+        // GitHub
+        pdfPage.setTextColor(107, 107, 107);
+        pdfPage.text('GitHub:', 100, footerY + 4);
+        pdfPage.setTextColor(255, 107, 53);
+        pdfPage.textWithLink('github.com/bradleybotes', 120, footerY + 4, { url: 'https://github.com/bradleybotes' });
+      };
+      
+      // Add first page with clickable header - matching site style
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      
+      // "Visit:" label in grey
+      pdf.setTextColor(107, 107, 107); // #6B6B6B grey
+      pdf.text('Visit:', 10, 8);
+      
+      // Website link in orange
+      pdf.setTextColor(255, 107, 53); // #FF6B35 orange
+      pdf.textWithLink('www.bradleybotes.co.za', 25, 8, { url: 'https://www.bradleybotes.co.za' });
+      
+      // "Download CV" button in orange
+      pdf.setTextColor(255, 107, 53); // #FF6B35 orange
+      pdf.textWithLink('Download CV', pdfWidth - 40, 8, { url: 'https://www.bradleybotes.co.za/cv/cv_download.pdf' });
+      
+      // Calculate available height
+      const headerHeight = 12;
+      const availableHeight = pdfHeight - headerHeight;
+      
+      pdf.addImage(imgData, 'PNG', 0, headerHeight, pdfWidth, scaledHeight);
+      heightLeft -= availableHeight;
+      
+      // Add remaining pages
+      while (heightLeft > 0) {
+        pdf.addPage();
+        yPosition = -(scaledHeight - heightLeft);
+        pdf.addImage(imgData, 'PNG', 0, yPosition, pdfWidth, scaledHeight);
+        heightLeft -= availableHeight;
+      }
+      
+      // Add contact footer only on the last page
+      addContactFooter(pdf);
+      
+      pdf.save(`Bradley_Botes_${project.title.replace(/\s+/g, '_')}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
@@ -91,18 +216,41 @@ const ProjectDetail = () => {
             </div>
 
             <div className="flex flex-wrap gap-4">
-              <button className="inline-flex items-center px-6 py-3 bg-orange text-white rounded-lg font-semibold hover:bg-orange-hover transition-colors shadow-lg">
-                <FaExternalLinkAlt className="mr-2" />
-                View Live Dashboard
-              </button>
-              <button className="inline-flex items-center px-6 py-3 border-2 border-orange text-orange rounded-lg font-semibold hover:bg-orange hover:text-white transition-colors">
-                <FaDownload className="mr-2" />
-                Request Demo
+              {project.embedUrl && (
+                <a
+                  href={project.embedUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center px-6 py-3 bg-accent text-white rounded-lg font-semibold hover:bg-accent-light transition-colors shadow-lg"
+                >
+                  <FaExternalLinkAlt className="mr-2" />
+                  View Live Dashboard
+                </a>
+              )}
+              <button
+                onClick={downloadPDF}
+                disabled={isGeneratingPDF}
+                className="inline-flex items-center px-6 py-3 border-2 border-accent text-accent rounded-lg font-semibold hover:bg-accent hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isGeneratingPDF ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-accent mr-2"></div>
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <FaFilePdf className="mr-2" />
+                    Download as PDF
+                  </>
+                )}
               </button>
             </div>
           </motion.div>
         </div>
       </section>
+
+      {/* Content wrapper for PDF generation */}
+      <div ref={contentRef}>
 
       {/* Dashboard Preview - Static Images */}
       <section className="py-12">
@@ -192,7 +340,7 @@ const ProjectDetail = () => {
 
       {/* Live Dashboard Embed */}
       {project.embedUrl && (
-        <section className="py-12">
+        <section className="py-12" data-embed-section>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -389,6 +537,7 @@ const ProjectDetail = () => {
           </div>
         </div>
       </section>
+      </div>
     </div>
   );
 };
