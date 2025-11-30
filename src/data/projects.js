@@ -9,8 +9,7 @@ export const projects = [
       '/images/Portfolio/Project1/AzureCostOverview.png',
       '/images/Portfolio/Project1/UsageDetails.png'
     ],
-    
-
+    embedUrl: 'https://app.fabric.microsoft.com/view?r=eyJrIjoiNDJjYzVkN2QtMDBmNy00YmVhLWJmZWQtZWQ2ZWY1MmQxMTkyIiwidCI6ImE0YTZlMGMxLWI1MzEtNDY4OS1hMGEwLTFhZDIyNTBiYTg0MyIsImMiOjl9',
     fullDescription: `A production-ready Azure FinOps dashboard that centralizes cost, usage, and tagging health across subscriptions, resource groups, services, and regions. It connects to Azure Cost Management exports and/or the Consumption APIs to surface daily spend, month-to-date (MTD) progress, end-of-month forecasts, budget variance, idle/underutilized hotspots, and tag coverage for accurate showback/chargeback. Interactive slicers for subscription, environment, department, and custom tags make it easy for finance, IT, and engineering leads to drill into anomalies and take action.`,
     businessProblem: `Finance and engineering teams lacked a single source of truth for Azure spend, leading to budget overruns, weak forecasting, and poor tag hygiene that blocked accurate cross-charging.`,
     technologies: ['Power BI', 'Power Query (M)', 'DAX', 'Azure Cost Management + Billing', 'Azure Consumption API', 'Azure Storage (CSV/Parquet exports)'],
@@ -392,6 +391,7 @@ CALCULATE(
       '/images/Portfolio/OPPA_Home.png',
       '/images/Portfolio/OPPA_End.png'
     ],
+    embedUrl: 'https://app.powerbi.com/view?r=eyJrIjoiNGJlMGJmZmMtYTU3ZS00MjM0LWEyMWEtMzE5MDljYmYyMmM3IiwidCI6ImE0YTZlMGMxLWI1MzEtNDY4OS1hMGEwLTFhZDIyNTBiYTg0MyIsImMiOjl9',
     fullDescription: `A comprehensive sales and product overview dashboard designed for OPPA Wall Art company. This Power BI solution provides real-time visibility into sales performance, product category breakdowns, and customer metrics. The dashboard features key performance indicators (KPIs) for quotes, total sales, and customer count. It includes multiple visualizations: a time-series line chart showing sales trends over time, a donut chart breaking down sales by product category (African continent, Geometric, Moon wall Art, Diffuser wall Art, Large Sound Diffuser), a dual-line chart comparing quoted vs paid sales, and a horizontal bar chart showing sales performance by year. Interactive filters allow users to drill down by year, month, and product type for detailed analysis. The solution also includes customer analysis with top customers by sales, geographic sales visualization on a map of South Africa, and product category performance breakdowns.`,
     businessProblem: `OPPA Wall Art needed a centralized view of sales performance to track revenue trends, understand product category performance, and monitor the conversion from quotes to paid sales. The lack of real-time sales visibility made it difficult to identify top-performing products, track sales trends over time, and make informed inventory and marketing decisions.`,
     technologies: ['Power BI', 'DAX', 'Power Query', 'Sales Analytics', 'E-commerce Integration', 'Azure Maps'],

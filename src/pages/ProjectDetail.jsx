@@ -104,25 +104,25 @@ const ProjectDetail = () => {
         </div>
       </section>
 
-      {/* Dashboard Preview */}
+      {/* Dashboard Preview - Static Images */}
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="bg-white rounded-xl shadow-2xl overflow-hidden border border-grey-border"
+            className="bg-bg-white rounded-xl shadow-2xl overflow-hidden border border-border-light"
           >
             {(() => {
               const images = project.images || (project.image ? [project.image] : []);
               
               if (images.length === 0) {
                 return (
-                  <div className="aspect-video bg-grey-bg flex items-center justify-center">
-                    <div className="text-center text-grey">
+                  <div className="aspect-video bg-bg-light flex items-center justify-center">
+                    <div className="text-center text-text-medium">
                       <div className="text-8xl mb-4">📊</div>
                       <p className="text-xl font-semibold">Power BI Dashboard Preview</p>
-                      <p className="text-sm text-grey-light mt-2">Interactive dashboard screenshot would appear here</p>
+                      <p className="text-sm text-text-light mt-2">Interactive dashboard screenshot would appear here</p>
                     </div>
                   </div>
                 );
@@ -131,7 +131,7 @@ const ProjectDetail = () => {
               return (
                 <div className="relative">
                   {/* Main Image */}
-                  <div className="relative aspect-video bg-grey-bg">
+                  <div className="relative aspect-video bg-bg-light">
                     <img 
                       src={images[currentImageIndex]} 
                       alt={`${project.title} - Image ${currentImageIndex + 1}`}
@@ -143,14 +143,14 @@ const ProjectDetail = () => {
                       <>
                         <button
                           onClick={prevImage}
-                          className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
+                          className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-secondary/50 hover:bg-secondary/70 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
                           aria-label="Previous image"
                         >
                           <FaChevronLeft className="w-5 h-5" />
                         </button>
                         <button
                           onClick={nextImage}
-                          className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
+                          className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-secondary/50 hover:bg-secondary/70 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
                           aria-label="Next image"
                         >
                           <FaChevronRight className="w-5 h-5" />
@@ -161,15 +161,15 @@ const ProjectDetail = () => {
                   
                   {/* Image Indicators */}
                   {images.length > 1 && (
-                    <div className="flex justify-center space-x-2 p-4 bg-grey-bg">
+                    <div className="flex justify-center space-x-2 p-4 bg-bg-light">
                       {images.map((_, index) => (
                         <button
                           key={index}
                           onClick={() => goToImage(index)}
                           className={`w-3 h-3 rounded-full transition-all duration-200 ${
                             index === currentImageIndex 
-                              ? 'bg-orange' 
-                              : 'bg-grey-lighter hover:bg-grey-light'
+                              ? 'bg-accent' 
+                              : 'bg-border-medium hover:bg-text-light'
                           }`}
                           aria-label={`Go to image ${index + 1}`}
                         />
@@ -179,7 +179,7 @@ const ProjectDetail = () => {
                   
                   {/* Image Counter */}
                   {images.length > 1 && (
-                    <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm backdrop-blur-sm">
+                    <div className="absolute top-4 right-4 bg-secondary/50 text-white px-3 py-1 rounded-full text-sm backdrop-blur-sm">
                       {currentImageIndex + 1} / {images.length}
                     </div>
                   )}
@@ -189,6 +189,34 @@ const ProjectDetail = () => {
           </motion.div>
         </div>
       </section>
+
+      {/* Live Dashboard Embed */}
+      {project.embedUrl && (
+        <section className="py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="bg-bg-white rounded-xl shadow-2xl overflow-hidden border border-border-light"
+            >
+              <div className="p-6 border-b border-border-light">
+                <h3 className="text-2xl font-bold text-text-dark">Live Interactive Dashboard</h3>
+                <p className="text-text-medium mt-2">Explore the interactive Power BI report below</p>
+              </div>
+              <div className="relative w-full" style={{ paddingBottom: '56.25%' }}> {/* 16:9 aspect ratio */}
+                <iframe
+                  title={`${project.title} - Interactive Dashboard`}
+                  src={project.embedUrl}
+                  className="absolute top-0 left-0 w-full h-full border-0"
+                  allowFullScreen={true}
+                  style={{ minHeight: '600px' }}
+                />
+              </div>
+            </motion.div>
+          </div>
+        </section>
+      )}
 
       {/* Project Overview */}
       <section className="py-12">
