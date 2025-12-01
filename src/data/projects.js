@@ -490,6 +490,103 @@ DIVIDE(
     ]
   },
   {
+    id: 'dutch-housing-rental',
+    title: 'Dutch Housing Rental Property Dashboard',
+    shortDescription: 'Comprehensive rental property management dashboard for Dutch housing organizations with occupancy tracking, vacancy analysis, and financial KPIs.',
+    tags: ['Power BI', 'Property Management', 'Rental Analytics', 'DAX', 'Dutch Housing'],
+    images: [
+      '/images/Portfolio/DutchHousing.png'
+    ],
+    fullDescription: `A comprehensive rental property management dashboard designed specifically for Dutch housing organizations. This Power BI solution provides real-time visibility into property occupancy, vacancy rates, rental income, and operational expenses. The dashboard features key performance indicators (KPIs) including total units, vacancy units, occupancy units, potential rent, total rent, and vacancy loss. It includes detailed analysis of occupancy percentages, vacancy percentages, and gap analysis. The solution provides month-over-month trends for total rent and vacancy units, along with operational expense breakdowns by category. Interactive filters allow users to drill down by location (woonplaats), vacancy type (leegstandstype), building description (gebouw), tenant component (huurdercomp), and rental contract number (huurcontractnr).`,
+    businessProblem: `Dutch housing organizations needed a centralized view of rental property performance to track occupancy rates, identify vacant units, monitor rental income, and analyze operational expenses. The lack of real-time property visibility made it difficult to optimize occupancy, reduce vacancy losses, and make informed property management decisions.`,
+    technologies: ['Power BI', 'DAX', 'Power Query', 'Property Management', 'Financial Reporting'],
+    dataSources: [
+      'Property Management System',
+      'Rental Contract Database',
+      'Vacancy Tracking System',
+      'Financial/Operational Expense Data',
+      'Date/Fiscal calendar table'
+    ],
+    daxLogic: [
+      {
+        title: 'Total Units',
+        code: `Total Units =
+DISTINCTCOUNT('Property'[UnitID])`
+      },
+      {
+        title: 'Vacancy Units',
+        code: `Vacancy Units =
+CALCULATE(
+    DISTINCTCOUNT('Property'[UnitID]),
+    'Property'[Status] = "Vacant"
+)`
+      },
+      {
+        title: 'Occupancy Units',
+        code: `Occupancy Units =
+[Total Units] - [Vacancy Units]`
+      },
+      {
+        title: 'Occupancy Percentage',
+        code: `Occupancy % =
+DIVIDE(
+    [Occupancy Units],
+    [Total Units],
+    0
+) * 100`
+      },
+      {
+        title: 'Vacancy Percentage',
+        code: `Vacancy % =
+DIVIDE(
+    [Vacancy Units],
+    [Total Units],
+    0
+) * 100`
+      },
+      {
+        title: 'Total Rent',
+        code: `Total Rent =
+SUM('Rental'[RentAmount])`
+      },
+      {
+        title: 'Potential Rent',
+        code: `Potential Rent =
+SUMX(
+    VALUES('Property'[UnitID]),
+    RELATED('Property'[BaseRent])
+)`
+      },
+      {
+        title: 'Vacancy Loss',
+        code: `Vacancy Loss =
+[Potential Rent] - [Total Rent]`
+      },
+      {
+        title: 'Gap Percentage',
+        code: `Gap % =
+DIVIDE(
+    [Vacancy Loss],
+    [Potential Rent],
+    0
+) * 100`
+      }
+    ],
+    keyFeatures: [
+      'KPI cards for total units, vacancy units, occupancy units, potential rent, total rent, and vacancy loss',
+      'Occupancy and vacancy percentage tracking with period-based calculations',
+      'Monthly trend analysis for total rent and vacancy units',
+      'Donut chart showing occupancy, vacancy, and gap percentages',
+      'Operational expense breakdown by category (exploitatiepost_bedrag)',
+      'Interactive filters for location, vacancy type, building, tenant component, and contract number',
+      'Date range selection for flexible period analysis',
+      'Gap analysis showing potential revenue loss from vacancies',
+      'Vacancy days tracking for current year',
+      'Clean, modern design with professional color scheme',
+      'Dutch language interface for local housing organizations'
+    ]
+  },
+  {
     id: 'invoice-automation',
     title: 'Invoice Automation Control Center',
     shortDescription: 'End-to-end Azure + Power BI dashboard for automated invoice processing with real-time tracking and AI-driven validation.',

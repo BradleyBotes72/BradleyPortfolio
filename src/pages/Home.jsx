@@ -36,19 +36,52 @@ const Home = () => {
     
     setIsGeneratingPDF(true);
     try {
-      // Scroll to top first
-      window.scrollTo(0, 0);
-      await new Promise(resolve => setTimeout(resolve, 100));
+      const element = contentRef.current;
       
-      // Capture the ENTIRE page - let html2canvas auto-detect full height
-      const canvas = await html2canvas(contentRef.current, {
+      // Store original styles
+      const originalOverflow = element.style.overflow;
+      const originalHeight = element.style.height;
+      const originalMaxHeight = element.style.maxHeight;
+      
+      // Make element fully visible and expanded
+      element.style.overflow = 'visible';
+      element.style.height = 'auto';
+      element.style.maxHeight = 'none';
+      
+      // Scroll to top
+      window.scrollTo(0, 0);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Get actual dimensions after expansion
+      const fullHeight = Math.max(
+        element.scrollHeight,
+        element.offsetHeight,
+        element.clientHeight
+      );
+      const fullWidth = Math.max(
+        element.scrollWidth,
+        element.offsetWidth,
+        element.clientWidth
+      );
+      
+      // Capture the ENTIRE page
+      const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
         allowTaint: false,
         removeContainer: false,
+        height: fullHeight,
+        width: fullWidth,
+        scrollX: 0,
+        scrollY: 0,
       });
+      
+      // Restore original styles
+      element.style.overflow = originalOverflow;
+      element.style.height = originalHeight;
+      element.style.maxHeight = originalMaxHeight;
       
       const imgData = canvas.toDataURL('image/png');
       const imgWidth = canvas.width;
@@ -373,7 +406,7 @@ const Home = () => {
                       {/* Solid white background layer */}
                       <div className="absolute inset-0 bg-white"></div>
                       <img 
-                        src="/images/ProfileHome.jpg" 
+                        src="/images/profile.webp" 
                         alt="Bradley Botes - Power BI Specialist" 
                         className="w-full h-full object-contain relative"
                         style={{ 
@@ -576,7 +609,7 @@ const Home = () => {
                 <div className="aspect-square rounded-lg overflow-hidden border-4 border-grey-border relative bg-white">
                   <div className="absolute inset-0 bg-white"></div>
                   <img 
-                    src="/images/ProfileHome.jpg" 
+                    src="/images/profile.webp" 
                     alt="Bradley Botes" 
                     className="w-full h-full object-contain relative"
                     style={{ 
